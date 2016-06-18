@@ -1,10 +1,9 @@
-
 <!doctype html>
 
 <html lang="en">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>WebcamJS Test Page - Large Capture</title>
+    <title>Test webcam capture</title>
     <style type="text/css">
         body { font-family: Helvetica, sans-serif; }
         h2, h3 { margin-top:0; }
@@ -14,12 +13,8 @@
     </style>
 </head>
 <body>
-    <div id="results">Your captured image will appear here...</div>
-    
-    <h1>WebcamJS Test Page - Large Capture</h1>
-    <h3>Demonstrates 640x480 large capture with 320x240 small display</h3>
-    
-    <div id="my_camera"></div>
+    <div id="results">captured image</div>
+    <div id="camera"></div>
     
     <!-- First, include the Webcam.js JavaScript Library -->
     <script type="text/javascript" src="node_modules/webcam.js"></script>
@@ -34,12 +29,12 @@
             image_format: 'jpeg',
             jpeg_quality: 90
         });
-        Webcam.attach( '#my_camera' );
+        Webcam.attach( '#camera' );
     </script>
     
     <!-- A button for taking snaps -->
     <form>
-        <input type=button value="Take Large Snapshot" onClick="take_snapshot()">
+        <input type=button value="Take Snapshot" onClick="take_snapshot()">
     </form>
     
     <!-- Code to handle taking the snapshot and displaying it locally -->
@@ -49,8 +44,19 @@
             Webcam.snap( function(data_uri) {
                 // display results in page
                 document.getElementById('results').innerHTML = 
-                    '<h2>Here is your large image:</h2>' + 
+                    '<h2>Result image:</h2>' + 
                     '<img src="'+data_uri+'"/>';
+
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "https://api.projectoxford.ai/emotion/v1.0/recognize");
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                xhr.setRequestHeader('Access-Control-Allow-Origin', "*");
+                //xhr.setRequestHeader("Ocp-Apim-Subscription-Key", "59e8effcb05b4ab5b37dc2e0f3290315");
+                xhr.send(JSON.stringify({"url":"http://newsrescue.com/wp-content/uploads/2015/04/happy-person.jpg"}));
+                //if (xhr.readyState == 4)
+                 // if (xhr.status == 200)
+                    //var json_response = JSON.parse(xhr.responseText);
+                    console.log(xhr.responseText);
             } );
         }
     </script>
